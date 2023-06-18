@@ -35,26 +35,43 @@ async function getSelectedCode({
     .join("\n");
 }
 
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 async function chatComplete(fetch, openai_api_key, content) {
-  const response = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${openai_api_key}`,
-    },
-    body: JSON.stringify({
-      model: "gpt-3.5-turbo-0613",
-      messages: [
-        {
-          role: "user",
-          content: content,
-        },
-      ],
-      temperature: 0.0,
-    }),
-  });
-  const resp = await response.json();
-  return resp.choices[0].message.content.trim();
+  // Chat completions API is highly unstable. Retry up to 3 times.
+  let resp;
+  const numAttempts = 3;
+  for (let [index] of Array(numAttempts).fill().entries()) {
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${openai_api_key}`,
+      },
+      body: JSON.stringify({
+        model: "gpt-3.5-turbo-0613",
+        messages: [
+          {
+            role: "user",
+            content: content,
+          },
+        ],
+        temperature: 0.0,
+      }),
+    });
+
+    resp = await response.json();
+    if (resp.choices && resp.choices.length > 0) {
+      return resp.choices[0].message.content.trim();
+    }
+
+    console.log(`Attempt ${index + 1} failed. Retrying...`);
+    await sleep(1000);
+  }
+
+  throw new Error(JSON.stringify(resp))
 }
 
 function makePrompt({ body, code, language }) {
@@ -85,6 +102,14 @@ module.exports = async ({ github, context, fetch, openai_api_key }) => {
     subject_type,
   } = context.payload.comment;
   const body = rawBody.replace(/^\$ai\s+/, "");
+
+  const { runId: run_id, job } = context;
+  const jobs = await github.rest.actions.listJobsForWorkflowRun({
+    owner,
+    repo,
+    run_id,
+  });
+  const { html_url: jobUrl } = jobs.data.jobs.find(({ name }) => name === job);
 
   if (actor !== "harupy") {
     await github.rest.pulls.createReviewComment({
@@ -135,16 +160,21 @@ module.exports = async ({ github, context, fetch, openai_api_key }) => {
   // Get a suggestion
   const language = path.split(".").pop();
   const prompt = makePrompt({ body, code, language });
-  const suggestion = await chatComplete(fetch, openai_api_key, prompt);
+  let suggestion;
+  try {
+    suggestion = await chatComplete(fetch, openai_api_key, prompt);
+  } catch (e) {
+    const body = `Chat completions request failed (error: ${e}). See ${jobUrl} for more details.`;
+    await github.rest.pulls.createReviewComment({
+      owner,
+      repo,
+      pull_number,
+      body,
+      in_reply_to: comment_id,
+      path,
+    });
 
   // Construct a reply comment
-  const { runId: run_id, job } = context;
-  const jobs = await github.rest.actions.listJobsForWorkflowRun({
-    owner,
-    repo,
-    run_id,
-  });
-  const { html_url: jobUrl } = jobs.data.jobs.find(({ name }) => name === job);
   const reply = `
 @${actor}
 ${suggestion}
