@@ -39,7 +39,7 @@ function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-async function chatComplete({ fetch, openai_api_key, model, content }) {
+async function chatComplete({ fetch, openai_api_key, model, prompt }) {
   // Chat completions API is highly unstable. Retry up to 3 times.
   let resp;
   const numAttempts = 3;
@@ -55,7 +55,7 @@ async function chatComplete({ fetch, openai_api_key, model, content }) {
         messages: [
           {
             role: "user",
-            content: content,
+            content: prompt,
           },
         ],
         temperature: 0.0,
