@@ -173,6 +173,7 @@ module.exports = async ({ github, context, fetch, openai_api_key, model }) => {
       in_reply_to: comment_id,
       path,
     });
+    return;
   }
 
   // Construct a reply comment
