@@ -182,7 +182,7 @@ module.exports = async ({ github, context, fetch, openai_api_key, model }) => {
 @${actor}
 ${suggestion}
 
-<details><summary>See prompt</summary>
+<details><summary>Click to see prompt, model, and job details</summary>
 
 - Job: ${jobUrl}
 - Model: ${model}
