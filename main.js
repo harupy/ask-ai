@@ -39,7 +39,7 @@ function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-async function chatComplete(fetch, openai_api_key, content) {
+async function chatComplete({ fetch, openai_api_key, model, content }) {
   // Chat completions API is highly unstable. Retry up to 3 times.
   let resp;
   const numAttempts = 3;
@@ -51,7 +51,7 @@ async function chatComplete(fetch, openai_api_key, content) {
         Authorization: `Bearer ${openai_api_key}`,
       },
       body: JSON.stringify({
-        model: "gpt-3.5-turbo-0613",
+        model,
         messages: [
           {
             role: "user",
@@ -84,7 +84,7 @@ ${code}
 `.trim();
 }
 
-module.exports = async ({ github, context, fetch, openai_api_key }) => {
+module.exports = async ({ github, context, fetch, openai_api_key, model }) => {
   // https://octokit.github.io/rest.js
   console.log(context);
   const { actor } = context;
@@ -162,7 +162,7 @@ module.exports = async ({ github, context, fetch, openai_api_key }) => {
   const prompt = makePrompt({ body, code, language });
   let suggestion;
   try {
-    suggestion = await chatComplete(fetch, openai_api_key, prompt);
+    suggestion = await chatComplete({ fetch, openai_api_key, model, prompt });
   } catch (e) {
     const body = `Chat completions request failed (error: ${e}). See ${jobUrl} for more details.`;
     await github.rest.pulls.createReviewComment({
