@@ -177,7 +177,7 @@ module.exports = async ({ github, context, fetch, openai_api_key, model }) => {
   }
 
   // Construct a reply comment
-  const indentedPrompt = prompt.replace(/^/gm, " " * 2).trim();
+  const indentedPrompt = prompt.replace(/^/gm, " ".repeat(2)).trim();
   const reply = `
 @${actor}
 ${suggestion}
