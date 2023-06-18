@@ -177,18 +177,19 @@ module.exports = async ({ github, context, fetch, openai_api_key, model }) => {
   }
 
   // Construct a reply comment
+  const indentedPrompt = prompt.replace(/^/gm, " " * 2).strip();
   const reply = `
 @${actor}
 ${suggestion}
 
-<details><summary>Info</summary>
+<details><summary>See prompt</summary>
 
-Job: ${jobUrl}
-Prompt:
-
-\`\`\`\`\`markdown
-${prompt}
-\`\`\`\`\`
+- Job: ${jobUrl}
+- Model: ${model}
+- Prompt:
+  \`\`\`\`\`markdown
+  ${indentedPrompt}
+  \`\`\`\`\`
 
 
 </details>
