@@ -71,7 +71,7 @@ async function chatComplete(fetch, openai_api_key, content) {
     await sleep(1000);
   }
 
-  throw new Error(JSON.stringify(resp))
+  throw new Error(JSON.stringify(resp));
 }
 
 function makePrompt({ body, code, language }) {
@@ -173,6 +173,7 @@ module.exports = async ({ github, context, fetch, openai_api_key }) => {
       in_reply_to: comment_id,
       path,
     });
+  }
 
   // Construct a reply comment
   const reply = `
