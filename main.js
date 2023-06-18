@@ -146,7 +146,8 @@ module.exports = async ({ github, context, fetch, openai_api_key }) => {
   });
   const { html_url: jobUrl } = jobs.data.jobs.find(({ name }) => name === job);
   const reply = `
-${actor} ${suggestion}
+@${actor}
+${suggestion}
 
 <details><summary>Info</summary>
 
