@@ -1,0 +1,21 @@
+name: "ask-ai"
+description: "Enhance PR reviews by querying AI with your questions."
+
+inputs:
+  openai-api-key:
+    description: "OpenAI API key"
+    required: true
+  github-token:
+    description: "GitHub token"
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/github-script@v6
+      with:
+        github-token: ${{ inputs.github-token }}
+        script: |
+          const script = require('./main.js')
+          const openai_api_key = '${{ inputs.openai-api-key }}'
+          await script({github, context, fetch, openai_api_key})
