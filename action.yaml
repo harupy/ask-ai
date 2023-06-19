@@ -20,7 +20,7 @@ runs:
       with:
         github-token: ${{ inputs.github-token }}
         script: |
-          const script = require("./main.js");
+          const script = require(`${process.env.GITHUB_ACTION_PATH}/main.js`);
           const openai_api_key = "${{ inputs.openai-api-key }}";
           const model = "${{ inputs.model }}";
           await script({ github, context, fetch, openai_api_key, model });
